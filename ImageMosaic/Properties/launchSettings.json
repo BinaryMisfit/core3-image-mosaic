@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ImageMosaic": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\wirob\\Downloads\\Caltech101\\20200726130139_1.jpg C:\\Users\\wirob\\Downloads\\Caltech101\\"
+    }
+  }
+}
