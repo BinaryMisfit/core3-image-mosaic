@@ -39,7 +39,7 @@
             }
         }
 
-        public void SplitImage(int columns, int rows)
+        public void SplitImage(int columns, int rows, DirectoryInfo workingDirectory = null)
         {
             if (columns == 0 || rows == 0)
             {
@@ -60,6 +60,7 @@
                 throw new InvalidDataException();
             }
 
+            bool saveFiles = workingDirectory != null && workingDirectory.Exists;
             SplitImages = new Dictionary<string, Image>();
             for (int x = 0; x < image.Width; x += blockWidth)
             {
@@ -69,6 +70,11 @@
                     string key = $"{x}x{y}";
                     Image splitImage = image.Clone(img => img.Crop(rectangle));
                     SplitImages.Add(key, splitImage);
+                    if (saveFiles)
+                    {
+                        string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(file.FullName)}_{x}_{y}{file.Extension}";
+                        splitImage.Save(saveFile);
+                    }
                 }
             }
         }

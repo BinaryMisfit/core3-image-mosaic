@@ -28,10 +28,23 @@
                     "--rows",
                     getDefaultValue: () => 20,
                     description: "The number of rows for the overlay grid"
-                    )
+                    ),
+                new Option<DirectoryInfo>(
+                    "--workingDir",
+                    description: "The folder to use to save temporary files")
             };
             commandLine.Description = "Generates a mosaic using a source image and selection of smaller images";
-            commandLine.Handler = CommandHandler.Create<FileInfo, DirectoryInfo, int, int>((sourceImage, imagePath, columns, rows) =>
+            commandLine.Handler = CommandHandler.Create<
+                FileInfo,
+                DirectoryInfo,
+                int,
+                int,
+                DirectoryInfo>((
+                    sourceImage,
+                    imagePath,
+                    columns,
+                    rows,
+                    workingDir) =>
             {
                 SourceImageFile sourceImageFile = new SourceImageFile(sourceImage);
                 if (!sourceImageFile.IsImageFile())
@@ -41,7 +54,12 @@
                 }
 
                 Console.WriteLine($"Splitting image into {columns}x{rows} ({columns * rows})");
-                sourceImageFile.SplitImage(columns, rows);
+                if (workingDir != null && workingDir.Exists)
+                {
+                    Console.WriteLine($"Working directory set to {workingDir.FullName}");
+                }
+
+                sourceImageFile.SplitImage(columns, rows, workingDir);
                 if (sourceImageFile.SplitImages == null || sourceImageFile.SplitImages.Count != (columns * rows))
                 {
                     throw new InvalidDataException();
