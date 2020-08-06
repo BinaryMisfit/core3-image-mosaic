@@ -46,13 +46,14 @@
                     rows,
                     workingDir) =>
             {
-                SourceImageFile sourceImageFile = new SourceImageFile(sourceImage);
-                if (!sourceImageFile.IsImageFile())
+                IImageFile image = new ImageFile(sourceImage);
+                if (!image.IsImageFile)
                 {
-                    Console.WriteLine($"{sourceImageFile.FileName} is not a valid image file");
+                    Console.WriteLine($"{image.File.Name} is not a valid image file");
                     Environment.Exit(255);
                 }
 
+                SourceImageFile sourceImageFile = new SourceImageFile(image);
                 Console.WriteLine($"Splitting image into {columns}x{rows} ({columns * rows})");
                 if (workingDir != null && workingDir.Exists)
                 {

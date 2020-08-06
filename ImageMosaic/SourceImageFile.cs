@@ -1,7 +1,6 @@
 ﻿namespace ImageMosaic
 {
     using SixLabors.ImageSharp;
-    using SixLabors.ImageSharp.Formats;
     using SixLabors.ImageSharp.Processing;
     using System;
     using System.Collections.Generic;
@@ -9,35 +8,14 @@
 
     internal class SourceImageFile
     {
-        private readonly FileInfo file;
+        public IImageFile imageFile;
 
-        public SourceImageFile(FileInfo file)
+        public SourceImageFile(IImageFile imageFile)
         {
-            this.file = file;
-            if (file == null)
-            {
-                throw new FileNotFoundException();
-            }
+            this.imageFile = imageFile ?? throw new FileNotFoundException();
         }
-
-        public string FileName => file.FullName;
 
         public Dictionary<string, Image> SplitImages { get; private set; }
-
-        public bool IsImageFile()
-        {
-            try
-            {
-                using (Image image = Image.Load(file.OpenRead(), out IImageFormat format))
-                {
-                    return true;
-                }
-            }
-            catch (UnknownImageFormatException)
-            {
-                return false;
-            }
-        }
 
         public void SplitImage(int columns, int rows, DirectoryInfo workingDirectory = null)
         {
@@ -46,11 +24,14 @@
                 throw new MissingFieldException();
             }
 
-            IImageFormat format;
-            Image image = LoadImage(out format);
-            if (image == null)
+            Image image;
+            try
             {
-                throw new FileNotFoundException();
+                image = imageFile.Load();
+            }
+            catch (UnknownImageFormatException)
+            {
+                return;
             }
 
             int blockWidth = image.Width / columns;
@@ -72,23 +53,10 @@
                     SplitImages.Add(key, splitImage);
                     if (saveFiles)
                     {
-                        string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(file.FullName)}_{x}_{y}{file.Extension}";
+                        string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(imageFile.File.FullName)}_{x}_{y}{imageFile.File.Extension}";
                         splitImage.Save(saveFile);
                     }
                 }
-            }
-        }
-
-        private Image LoadImage(out IImageFormat format)
-        {
-            try
-            {
-                return Image.Load(file.OpenRead(), out format);
-            }
-            catch (UnknownImageFormatException)
-            {
-                format = null;
-                return null;
             }
         }
     }
