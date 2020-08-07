@@ -8,14 +8,14 @@
 
     internal class SourceImageFile
     {
-        public IImageFile imageFile;
-
         public SourceImageFile(IImageFile imageFile)
         {
-            this.imageFile = imageFile ?? throw new FileNotFoundException();
+            ImageFile = imageFile ?? throw new FileNotFoundException();
         }
 
         public Dictionary<string, Image> SplitImages { get; private set; }
+
+        internal IImageFile ImageFile { get; set; }
 
         public void SplitImage(int columns, int rows, DirectoryInfo workingDirectory = null)
         {
@@ -27,7 +27,7 @@
             Image image;
             try
             {
-                image = imageFile.Load();
+                image = ImageFile.Load();
             }
             catch (UnknownImageFormatException)
             {
@@ -53,7 +53,7 @@
                     SplitImages.Add(key, splitImage);
                     if (saveFiles)
                     {
-                        string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(imageFile.File.FullName)}_{x}_{y}{imageFile.File.Extension}";
+                        string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(ImageFile.File.FullName)}_{x}_{y}{ImageFile.File.Extension}";
                         splitImage.Save(saveFile);
                     }
                 }

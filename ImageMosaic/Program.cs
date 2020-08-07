@@ -1,9 +1,11 @@
 ﻿namespace ImageMosaic
 {
     using System;
+    using System.Collections.Generic;
     using System.CommandLine;
     using System.CommandLine.Invocation;
     using System.IO;
+    using System.Linq;
 
     internal class Program
     {
@@ -47,6 +49,7 @@
                     workingDir) =>
             {
                 IImageFile image = new ImageFile(sourceImage);
+                List<TileImage> sourceTiles = new List<TileImage>();
                 if (!image.IsImageFile)
                 {
                     Console.WriteLine($"{image.File.Name} is not a valid image file");
@@ -54,7 +57,7 @@
                 }
 
                 SourceImageFile sourceImageFile = new SourceImageFile(image);
-                Console.WriteLine($"Splitting image into {columns}x{rows} ({columns * rows})");
+                Console.WriteLine($"Splitting image into {columns}x{rows} blocks ({columns * rows})");
                 if (workingDir != null && workingDir.Exists)
                 {
                     Console.WriteLine($"Working directory set to {workingDir.FullName}");
@@ -66,7 +69,21 @@
                     throw new InvalidDataException();
                 }
 
-                Console.WriteLine("Splitting completed");
+                Console.WriteLine($"Extracting {columns * rows} images");
+                sourceImageFile.SplitImages.Keys.ToList().ForEach(key =>
+                {
+                    TileImage tile = new TileImage(key, sourceImageFile.SplitImages[key]);
+                    sourceTiles.Add(tile);
+                });
+
+                sourceImageFile.SplitImages.Clear();
+                Console.WriteLine("Split complete");
+                Console.WriteLine($"Calculating average RGB for extracted images");
+                sourceTiles.ForEach(tile =>
+                {
+                    tile.AverageColor = new AverageColor(tile.Image).Calculate();
+                });
+                Console.WriteLine($"Calculation complete");
             });
             return commandLine.InvokeAsync(args).Result;
         }
