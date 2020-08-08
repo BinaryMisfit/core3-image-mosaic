@@ -4,7 +4,7 @@
     using SixLabors.ImageSharp.Formats;
     using System.IO;
 
-    internal interface IImageFile
+    public interface IImageFile
     {
         public FileInfo File { get; }
 

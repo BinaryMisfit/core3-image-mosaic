@@ -2,7 +2,6 @@
 {
     using SixLabors.ImageSharp;
     using SixLabors.ImageSharp.Formats;
-    using SixLabors.ImageSharp.PixelFormats;
     using System.IO;
 
     public class ImageFile : IImageFile

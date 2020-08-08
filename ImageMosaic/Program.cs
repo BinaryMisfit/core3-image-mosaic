@@ -7,7 +7,7 @@
     using System.IO;
     using System.Linq;
 
-    internal class Program
+    public class Program
     {
         private static int Main(string[] args)
         {
@@ -48,15 +48,26 @@
                     rows,
                     workingDir) =>
             {
+                Console.WriteLine("Validating image");
                 IImageFile image = new ImageFile(sourceImage);
-                List<TileImage> sourceTiles = new List<TileImage>();
                 if (!image.IsImageFile)
                 {
-                    Console.WriteLine($"{image.File.Name} is not a valid image file");
+                    Console.WriteLine($"{image.File.FullName} is not a valid image file");
                     Environment.Exit(255);
                 }
 
+                Console.WriteLine("Image validated");
+                Console.WriteLine("Loading tile library");
+                TileLibrary tileLibrary = new TileLibrary(imagePath);
+                if (!tileLibrary.HasImages())
+                {
+                    Console.WriteLine($"{imagePath.FullName} does not contain any images");
+                    Environment.Exit(255);
+                }
+
+                Console.WriteLine("Tile library loaded");
                 SourceImageFile sourceImageFile = new SourceImageFile(image);
+                List<TileImage> sourceTiles = new List<TileImage>();
                 Console.WriteLine($"Splitting image into {columns}x{rows} blocks ({columns * rows})");
                 if (workingDir != null && workingDir.Exists)
                 {
@@ -78,12 +89,38 @@
 
                 sourceImageFile.SplitImages.Clear();
                 Console.WriteLine("Split complete");
-                Console.WriteLine($"Calculating average RGB for extracted images");
+                Console.WriteLine("Performing calculations on extracted images");
                 sourceTiles.ForEach(tile =>
                 {
-                    tile.AverageColor = new AverageColor(tile.Image).Calculate();
+                    ImageCalculate calculate = new ImageCalculate(tile.Image);
+                    tile.RGB = calculate.RGB;
+                    tile.XYZ = calculate.XYZ;
                 });
-                Console.WriteLine($"Calculation complete");
+                Console.WriteLine("Calculations complete");
+                Console.WriteLine("Performing calculations on tile library");
+                List<TileImage> invalidImages = new List<TileImage>();
+                tileLibrary.Images.ForEach(image =>
+                {
+                    if (image.Identifier != sourceImage.FullName)
+                    {
+                        ImageCalculate calculate = new ImageCalculate(image.Image);
+                        image.RGB = calculate.RGB;
+                        image.XYZ = calculate.XYZ;
+                        image.CIE = calculate.CIE;
+                    }
+                    else
+                    {
+                        invalidImages.Add(image);
+                    }
+                });
+
+                if (invalidImages.Count > 0)
+                {
+                    Console.WriteLine("Removing Invalid Images");
+                    tileLibrary.Remove(invalidImages);
+                }
+
+                Console.WriteLine("Calculations complete");
             });
             return commandLine.InvokeAsync(args).Result;
         }

@@ -3,7 +3,7 @@
     using SixLabors.ImageSharp;
     using System;
 
-    internal class TileImage
+    public class TileImage
     {
         public TileImage(string identifier, Image image)
         {
@@ -11,10 +11,10 @@
             Identifier = identifier;
         }
 
-        public Color AverageColor { get; set; }
-
+        public ImageCIE CIE { get; set; }
         public string Identifier { get; }
-
         public Image Image { get; }
+        public ImageRGB RGB { get; set; }
+        public ImageXYZ XYZ { get; set; }
     }
 }

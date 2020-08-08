@@ -6,7 +6,7 @@
     using System.Collections.Generic;
     using System.IO;
 
-    internal class SourceImageFile
+    public class SourceImageFile
     {
         public SourceImageFile(IImageFile imageFile)
         {
