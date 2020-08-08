@@ -1,5 +1,6 @@
 ﻿namespace ImageMosaic
 {
+    using SixLabors.ImageSharp;
     using System;
     using System.Collections.Generic;
     using System.CommandLine;
@@ -14,12 +15,12 @@
             RootCommand commandLine = new RootCommand
             {
                 new Argument<FileInfo>(
-                    "SourceImage",
+                    "SourceFile",
                     "Full path of the source image")
                 .ExistingOnly(),
                 new Argument<DirectoryInfo>(
-                    "ImagePath",
-                    "Path to folder containing the images to use for replacement")
+                    "LibraryDir",
+                    "Path to directory containing the images to use for replacement")
                 .ExistingOnly(),
                 new Option<int>(
                     "--columns",
@@ -33,7 +34,7 @@
                     ),
                 new Option<DirectoryInfo>(
                     "--workingDir",
-                    description: "The folder to use to save temporary files")
+                    description: "The directory to use to save temporary files")
             };
             commandLine.Description = "Generates a mosaic using a source image and selection of smaller images";
             commandLine.Handler = CommandHandler.Create<
@@ -42,90 +43,57 @@
                 int,
                 int,
                 DirectoryInfo>((
-                    sourceImage,
-                    imagePath,
+                    sourceFile,
+                    libraryDir,
                     columns,
                     rows,
                     workingDir) =>
             {
-                Console.WriteLine("Validating image");
-                IImageFile image = new ImageFile(sourceImage);
-                if (!image.IsImageFile)
+                Console.WriteLine("Processing files");
+                ImageInfo sourceImage = FileParser.ParseFile(sourceFile);
+                List<ImageInfo> libraryImages = FileParser.ParseDirectory(libraryDir);
+                ImageInfo removeSource = libraryImages.Where(image => image.Id == sourceImage.Id).FirstOrDefault();
+                if (removeSource != null)
                 {
-                    Console.WriteLine($"{image.File.FullName} is not a valid image file");
-                    Environment.Exit(255);
+                    libraryImages.Remove(removeSource);
                 }
 
-                Console.WriteLine("Image validated");
-                Console.WriteLine("Loading tile library");
-                TileLibrary tileLibrary = new TileLibrary(imagePath);
-                if (!tileLibrary.HasImages())
+                Console.WriteLine("Files processed");
+                Console.WriteLine("Generating tiles");
+                Dictionary<string, Image> tiles = TileImage.Tile(sourceImage.File, columns, rows, workingDir);
+                List<ImageInfo> sourceTiles = null;
+                if (tiles != null && tiles.Count > 0)
                 {
-                    Console.WriteLine($"{imagePath.FullName} does not contain any images");
-                    Environment.Exit(255);
+                    sourceTiles = new List<ImageInfo>();
+                    tiles.Keys.ToList().ForEach(key =>
+                    {
+                        ImageInfo image = new ImageInfo(key, sourceImage.Format, tiles[key]);
+                        sourceTiles.Add(image);
+                    });
+
+                    tiles.Clear();
                 }
 
-                Console.WriteLine("Tile library loaded");
-                SourceImageFile sourceImageFile = new SourceImageFile(image);
-                List<TileImage> sourceTiles = new List<TileImage>();
-                Console.WriteLine($"Splitting image into {columns}x{rows} blocks ({columns * rows})");
-                if (workingDir != null && workingDir.Exists)
+                if (sourceTiles == null)
                 {
-                    Console.WriteLine($"Working directory set to {workingDir.FullName}");
+                    throw new InvalidOperationException("Unable to generate tiles");
                 }
 
-                sourceImageFile.SplitImage(columns, rows, workingDir);
-                if (sourceImageFile.SplitImages == null || sourceImageFile.SplitImages.Count != (columns * rows))
-                {
-                    throw new InvalidDataException();
-                }
-
-                Console.WriteLine($"Extracting {columns * rows} images");
-                sourceImageFile.SplitImages.Keys.ToList().ForEach(key =>
-                {
-                    TileImage tile = new TileImage(key, sourceImageFile.SplitImages[key]);
-                    sourceTiles.Add(tile);
-                });
-
-                sourceImageFile.SplitImages.Clear();
-                Console.WriteLine("Split complete");
-                Console.WriteLine("Performing calculations on extracted images");
+                Console.WriteLine("Tiles generated");
+                Console.WriteLine("Finding unique matches");
+                Dictionary<string, string> matches = new Dictionary<string, string>();
                 sourceTiles.ForEach(tile =>
                 {
-                    ImageCalculate calculate = new ImageCalculate(tile.Image);
-                    tile.RGB = calculate.RGB;
-                    tile.XYZ = calculate.XYZ;
-                    tile.CIE = calculate.CIE;
-                });
-                Console.WriteLine("Calculations complete");
-                Console.WriteLine("Performing calculations on tile library");
-                List<TileImage> invalidImages = new List<TileImage>();
-                tileLibrary.Images.ForEach(image =>
-                {
-                    if (image.Identifier != sourceImage.FullName)
+                    string matchId = ImageCompare.FindMatch(tile, libraryImages);
+                    matches.Add(tile.Id, matchId);
+                    ImageInfo removeMatch = libraryImages.Where(image => image.Id == matchId).FirstOrDefault();
+                    if (removeMatch != null)
                     {
-                        ImageCalculate calculate = new ImageCalculate(image.Image);
-                        image.RGB = calculate.RGB;
-                        image.XYZ = calculate.XYZ;
-                        image.CIE = calculate.CIE;
-                    }
-                    else
-                    {
-                        invalidImages.Add(image);
+                        libraryImages.Remove(removeMatch);
                     }
                 });
 
-                if (invalidImages.Count > 0)
-                {
-                    Console.WriteLine("Removing Invalid Images");
-                    tileLibrary.Remove(invalidImages);
-                }
-
-                Console.WriteLine("Calculations complete");
-                Console.WriteLine("Comparing image sets");
-                ImageCompare compare = new ImageCompare(sourceTiles, tileLibrary.Images);
-                compare.FindMatch();
-                Console.WriteLine("Comparison complete");
+                Console.WriteLine("Completed matching");
             });
             return commandLine.InvokeAsync(args).Result;
         }

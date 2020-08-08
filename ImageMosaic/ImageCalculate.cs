@@ -6,30 +6,24 @@
 
     public class ImageCalculate
     {
-        private const double reference = 100.000;
-
         public ImageCalculate(Image image)
         {
             Image = image ?? throw new MissingFieldException();
-            CalculateRGB();
-            CalculateXYZ();
-            CalculateCIE();
+            ColorTable = new ImageColorTable();
+            ColorTable.Rgb = CalculateRgb(image);
+            ColorTable.Xyz = CalculateXyz(ColorTable.Rgb);
+            ColorTable.Cie = CalculateCie(ColorTable.Xyz);
         }
 
-        public ImageCIE CIE { get; private set; }
+        public ImageColorTable ColorTable { get; private set; }
         public Image Image { get; }
-        public ImageRGB RGB { get; private set; }
-        public ImageXYZ XYZ { get; private set; }
 
-        private void CalculateCIE()
+        private ImageColorTable.ColorCie CalculateCie(ImageColorTable.ColorXyz colorXyz)
         {
-            double x = CalculateReference(XYZ.X);
-            double y = CalculateReference(XYZ.Y);
-            double z = CalculateReference(XYZ.Z);
-            double l = (116 * y) - 16;
-            double a = 500 * (x - y);
-            double b = 200 * (y - z);
-            CIE = new ImageCIE(l, a, b);
+            double l = (116 * colorXyz.Y) - 16;
+            double a = 500 * (colorXyz.X - colorXyz.Y);
+            double b = 200 * (colorXyz.Y - colorXyz.Z);
+            return new ImageColorTable.ColorCie(l, a, b);
         }
 
         private double CalculateIlluminant(double value)
@@ -45,27 +39,12 @@
                 calcValue = value / 12.92;
             }
 
-            return calcValue;
+            return calcValue * 100;
         }
 
-        private double CalculateReference(double value)
+        private ImageColorTable.ColorRgb CalculateRgb(Image image)
         {
-            double calcValue = value / reference;
-            if (calcValue > 0.008856)
-            {
-                calcValue = Math.Pow(calcValue, 1 / 3);
-            }
-            else
-            {
-                calcValue = (7.787 * calcValue) + (16 / 116);
-            }
-
-            return calcValue;
-        }
-
-        private void CalculateRGB()
-        {
-            using (Image<Rgba32> pixelImage = Image.CloneAs<Rgba32>())
+            using (Image<Rgba32> pixelImage = image.CloneAs<Rgba32>())
             {
                 double redCount = 0;
                 double greenCount = 0;
@@ -89,19 +68,19 @@
                 double red = redCount / 255;
                 double green = greenCount / 255;
                 double blue = blueCount / 255;
-                RGB = new ImageRGB(red, green, blue);
+                return new ImageColorTable.ColorRgb(red, green, blue);
             }
         }
 
-        private void CalculateXYZ()
+        private ImageColorTable.ColorXyz CalculateXyz(ImageColorTable.ColorRgb colorRgb)
         {
-            double red = CalculateIlluminant(RGB.Red);
-            double green = CalculateIlluminant(RGB.Green);
-            double blue = CalculateIlluminant(RGB.Blue);
+            double red = CalculateIlluminant(colorRgb.R);
+            double green = CalculateIlluminant(colorRgb.G);
+            double blue = CalculateIlluminant(colorRgb.B);
             double x = red * 0.4124 + green * 0.3576 + blue * 0.1805;
             double y = red * 0.2126 + green * 0.7152 + blue * 0.0722;
             double z = red * 0.0193 + green * 0.1192 + blue * 0.9505;
-            XYZ = new ImageXYZ(x, y, z);
+            return new ImageColorTable.ColorXyz(x, y, z);
         }
     }
 }

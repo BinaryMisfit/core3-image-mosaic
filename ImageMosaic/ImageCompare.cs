@@ -1,41 +1,30 @@
-﻿using System.Collections.Generic;
-
-namespace ImageMosaic
+﻿namespace ImageMosaic
 {
-    public class ImageCompare
+    using System.Collections.Generic;
+
+    public static class ImageCompare
     {
-        public ImageCompare(List<TileImage> source, List<TileImage> target)
+        public static string FindMatch(ImageInfo image, List<ImageInfo> images)
         {
-            Source = source;
-            Target = target;
-        }
-
-        private List<TileImage> Source { get; }
-        private List<TileImage> Target { get; }
-
-        public void FindMatch()
-        {
-            string matchId;
+            string matchId = image.Id;
             double matchDistance = 0;
-            Source.ForEach(sourceImage =>
+            images.ForEach(targetImage =>
             {
-                Target.ForEach(targetImage =>
+                double distance = DeltaE.Calculate(image.ColorTable.Cie, targetImage.ColorTable.Cie);
+                if (matchDistance == 0)
                 {
-                    CalculateDeltaE deltaE = new CalculateDeltaE(sourceImage, targetImage);
-                    double distance = deltaE.Distance;
-                    if (matchDistance == 0)
-                    {
-                        matchId = targetImage.Identifier;
-                        matchDistance = distance;
-                    }
+                    matchId = targetImage.Id;
+                    matchDistance = distance;
+                }
 
-                    if (distance < matchDistance)
-                    {
-                        matchId = targetImage.Identifier;
-                        matchDistance = distance;
-                    }
-                });
+                if (distance < matchDistance)
+                {
+                    matchId = targetImage.Id;
+                    matchDistance = distance;
+                }
             });
+
+            return matchId;
         }
     }
 }
