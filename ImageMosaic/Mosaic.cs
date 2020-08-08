@@ -2,16 +2,15 @@
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace ImageMosaic
 {
     public static class Mosaic
     {
-        public static string Compile(ImageInfo source, List<ImageInfo> tiles, List<ImageInfo> library, Dictionary<string, string> matches)
+        public static string Compile(ImageInfo source, List<ImageInfo> tiles, List<ImageInfo> library, Dictionary<string, string> matches, FileInfo outputFile = null)
         {
-            string fileName = $"mosaic-{source.File.Name}";
-            string fullName = $"{source.File.Directory}\\{fileName}";
             using (Image<Rgba32> mosaic = new Image<Rgba32>(source.Width, source.Height))
             {
                 matches.Keys.ToList().ForEach(key =>
@@ -42,10 +41,17 @@ namespace ImageMosaic
                     }
                 });
 
-                mosaic.Save(fullName);
+                if (outputFile == null)
+                {
+                    string fileName = $"mosaic-{source.File.Name}";
+                    string fullName = $"{source.File.Directory}\\{fileName}";
+                    outputFile = new FileInfo(fullName);
+                }
+
+                mosaic.Save(outputFile.FullName);
             }
 
-            return fullName;
+            return outputFile.FullName;
         }
     }
 }

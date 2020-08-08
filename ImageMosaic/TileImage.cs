@@ -8,7 +8,7 @@
 
     public static class TileImage
     {
-        public static Dictionary<string, Image> Tile(FileInfo imageFile, int columns, int rows, DirectoryInfo workingDirectory = null)
+        public static Dictionary<string, Image> Tile(FileInfo imageFile, int columns, int rows)
         {
             if (columns == 0 || rows == 0)
             {
@@ -24,7 +24,6 @@
                     throw new InvalidDataException();
                 }
 
-                bool saveFiles = workingDirectory != null && workingDirectory.Exists;
                 Dictionary<string, Image> splitImages = new Dictionary<string, Image>();
                 for (int x = 0; x < image.Width; x += blockWidth)
                 {
@@ -34,11 +33,6 @@
                         string key = $"{x}x{y}";
                         Image splitImage = image.Clone(img => img.Crop(rectangle));
                         splitImages.Add(key, splitImage);
-                        if (saveFiles)
-                        {
-                            string saveFile = $"{workingDirectory.FullName}{Path.GetFileNameWithoutExtension(imageFile.FullName)}_{x}_{y}{imageFile.Extension}";
-                            splitImage.Save(saveFile);
-                        }
                     }
                 }
 

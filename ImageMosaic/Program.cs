@@ -32,9 +32,9 @@
                     getDefaultValue: () => 20,
                     description: "The number of rows for the overlay grid"
                     ),
-                new Option<DirectoryInfo>(
-                    "--workingDir",
-                    description: "The directory to use to save temporary files"),
+                new Option<FileInfo>(
+                    "--outputFileName",
+                    description: "The output file name"),
                 new Option<bool>(
                     "--unique",
                     description: "Use unique images for replacements")
@@ -45,13 +45,13 @@
                 DirectoryInfo,
                 int,
                 int,
-                DirectoryInfo,
+                FileInfo,
                 bool>((
                     sourceFile,
                     libraryDir,
                     columns,
                     rows,
-                    workingDir,
+                    outputFileName,
                     unique) =>
             {
                 Console.WriteLine("Processing files");
@@ -65,7 +65,7 @@
 
                 Console.WriteLine("Files processed");
                 Console.WriteLine("Generating tiles");
-                Dictionary<string, Image> tiles = TileImage.Tile(sourceImage.File, columns, rows, workingDir);
+                Dictionary<string, Image> tiles = TileImage.Tile(sourceImage.File, columns, rows);
                 List<ImageInfo> sourceTiles = null;
                 if (tiles != null && tiles.Count > 0)
                 {
@@ -104,8 +104,8 @@
 
                 Console.WriteLine("Completed matching");
                 Console.WriteLine("Composing new image");
-                Mosaic.Compile(sourceImage, sourceTiles, libraryImages, matches);
-                Console.WriteLine("Image created and saved");
+                string outputFile = Mosaic.Compile(sourceImage, sourceTiles, libraryImages, matches, outputFileName);
+                Console.WriteLine($"Image created and saved to {outputFile}");
             });
             return commandLine.InvokeAsync(args).Result;
         }
