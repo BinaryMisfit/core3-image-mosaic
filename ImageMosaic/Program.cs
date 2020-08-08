@@ -34,7 +34,10 @@
                     ),
                 new Option<DirectoryInfo>(
                     "--workingDir",
-                    description: "The directory to use to save temporary files")
+                    description: "The directory to use to save temporary files"),
+                new Option<bool>(
+                    "--unique",
+                    description: "Use unique images for replacements")
             };
             commandLine.Description = "Generates a mosaic using a source image and selection of smaller images";
             commandLine.Handler = CommandHandler.Create<
@@ -42,12 +45,14 @@
                 DirectoryInfo,
                 int,
                 int,
-                DirectoryInfo>((
+                DirectoryInfo,
+                bool>((
                     sourceFile,
                     libraryDir,
                     columns,
                     rows,
-                    workingDir) =>
+                    workingDir,
+                    unique) =>
             {
                 Console.WriteLine("Processing files");
                 ImageInfo sourceImage = FileParser.ParseFile(sourceFile);
@@ -82,18 +87,25 @@
                 Console.WriteLine("Tiles generated");
                 Console.WriteLine("Finding unique matches");
                 Dictionary<string, string> matches = new Dictionary<string, string>();
+                List<ImageInfo> matchLibrary = new List<ImageInfo>(libraryImages);
                 sourceTiles.ForEach(tile =>
                 {
-                    string matchId = ImageCompare.FindMatch(tile, libraryImages);
+                    string matchId = ImageCompare.FindMatch(tile, matchLibrary);
                     matches.Add(tile.Id, matchId);
-                    ImageInfo removeMatch = libraryImages.Where(image => image.Id == matchId).FirstOrDefault();
-                    if (removeMatch != null)
+                    if (unique)
                     {
-                        libraryImages.Remove(removeMatch);
+                        ImageInfo removeMatch = matchLibrary.Where(image => image.Id == matchId).FirstOrDefault();
+                        if (removeMatch != null)
+                        {
+                            matchLibrary.Remove(removeMatch);
+                        }
                     }
                 });
 
                 Console.WriteLine("Completed matching");
+                Console.WriteLine("Composing new image");
+                Mosaic.Compile(sourceImage, sourceTiles, libraryImages, matches);
+                Console.WriteLine("Image created and saved");
             });
             return commandLine.InvokeAsync(args).Result;
         }
