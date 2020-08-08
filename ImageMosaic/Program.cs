@@ -95,6 +95,7 @@
                     ImageCalculate calculate = new ImageCalculate(tile.Image);
                     tile.RGB = calculate.RGB;
                     tile.XYZ = calculate.XYZ;
+                    tile.CIE = calculate.CIE;
                 });
                 Console.WriteLine("Calculations complete");
                 Console.WriteLine("Performing calculations on tile library");
@@ -121,6 +122,10 @@
                 }
 
                 Console.WriteLine("Calculations complete");
+                Console.WriteLine("Comparing image sets");
+                ImageCompare compare = new ImageCompare(sourceTiles, tileLibrary.Images);
+                compare.FindMatch();
+                Console.WriteLine("Comparison complete");
             });
             return commandLine.InvokeAsync(args).Result;
         }
