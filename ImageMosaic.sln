@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30309.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageMosaic", "ImageMosaic\ImageMosaic.csproj", "{96A5AF8C-AE15-4020-AC8C-B42D1F3CC4BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageMosaic.Tests", "ImageMosaic.Tests\ImageMosaic.Tests.csproj", "{4A66E16A-9E09-41E5-93B1-ABEE53D359A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{96A5AF8C-AE15-4020-AC8C-B42D1F3CC4BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96A5AF8C-AE15-4020-AC8C-B42D1F3CC4BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96A5AF8C-AE15-4020-AC8C-B42D1F3CC4BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A66E16A-9E09-41E5-93B1-ABEE53D359A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A66E16A-9E09-41E5-93B1-ABEE53D359A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A66E16A-9E09-41E5-93B1-ABEE53D359A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A66E16A-9E09-41E5-93B1-ABEE53D359A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
